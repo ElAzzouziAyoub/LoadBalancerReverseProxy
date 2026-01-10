@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -34,10 +35,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	mu.Unlock()
 
 	proxy := httputil.NewSingleHostReverseProxy(backend)
+	w.Write([]byte("Your request was forwarded to Server "+ fmt.Sprintf("%d",counter%len(backends)+ 1) + "\n" ))
 	proxy.ServeHTTP(w, r)
+	fmt.Println(r.Header)
 }
 
 func main() {
-	http.ListenAndServe(":9090", http.HandlerFunc(handler))
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(":9090", nil)
 }
 
