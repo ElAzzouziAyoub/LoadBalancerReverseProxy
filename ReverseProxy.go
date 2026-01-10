@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -20,14 +21,15 @@ var (
 func mustParse(raw string) *url.URL {
 	u, err := url.Parse(raw)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	return u
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	//Figured there would a datarace here since http requests are sent in parallel
 	mu.Lock()
-	backend := backends[counter%len(backends)]
+	backend := backends[counter%len(backends)] //This line distributes http requests over all backend servers evenly
 	counter++
 	mu.Unlock()
 
