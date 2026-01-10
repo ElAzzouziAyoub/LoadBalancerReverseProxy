@@ -6,12 +6,18 @@ import (
 )
 
 func handle(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Request received from",r.RemoteAddr)
+	w.Write([]byte("This is backend 3 server"))
+	switch r.Method {
+	case http.MethodGet :
+		fmt.Println("THis is a GET request")
+	case http.MethodPost :
+		fmt.Println("This is a Post request")
+	}
 
 }
 
 func main() {
 	fmt.Println("Starting Server 3 : ")
-	http.HandleFunc("/backend3",handle)
+	http.HandleFunc("/",handle)
 	http.ListenAndServe(":8083",nil)
 }
