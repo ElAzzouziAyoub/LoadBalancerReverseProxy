@@ -1,0 +1,59 @@
+openapi: 3.0.0
+info:
+  title: Reverse Proxy Admin API
+  version: 1.0.0
+servers:
+  - url: http://localhost:9091
+
+paths:
+  /admin/backends:
+    get:
+      summary: List all backends
+      responses:
+        "200":
+          description: Backend list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Backend"
+
+  /admin/backends/add:
+    post:
+      summary: Add a backend
+      parameters:
+        - in: query
+          name: url
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Backend added
+
+  /admin/backends/remove:
+    delete:
+      summary: Remove a backend
+      parameters:
+        - in: query
+          name: url
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Backend removed
+
+components:
+  schemas:
+    Backend:
+      type: object
+      properties:
+        URL:
+          type: string
+        Alive:
+          type: boolean
+        Connections:
+          type: integer
+
