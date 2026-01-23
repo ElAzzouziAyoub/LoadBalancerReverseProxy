@@ -14,12 +14,16 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+//Backend Structure 
+
 type Backend struct {
 	URL         *url.URL
 	Alive       bool
 	Connections int
 }
 
+
+//Needed variables 
 var (
 	counter int
 	mu      sync.Mutex
@@ -34,7 +38,7 @@ var (
 	limitePerMinute  = 10
 )
 
-
+//Function to parse from string to url Object
 func mustParse(raw string) *url.URL {
 	u, err := url.Parse(raw)
 	if err != nil {
@@ -43,7 +47,7 @@ func mustParse(raw string) *url.URL {
 	return u
 }
 
-
+//Function that resets the map every minute 
 func resetRateLimiter() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
@@ -84,19 +88,21 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		ip = r.RemoteAddr
 	}
-
+	
+	//Using mutex to prevent data races 
 	mu.Lock()
-	rateLimiter[ip]++
-	count := rateLimiter[ip]
+	rateLimiter[ip]++ // Round robin logic 
+	count := rateLimiter[ip] 
 	mu.Unlock()
 
-	if count > limitePerMinute {
+	if count > limitePerMinute { // Blocking requests if sent too much
 		http.Error(w, "Too many requests", http.StatusTooManyRequests)
 		return
 	}
-
+	//Getting the next backend 
 	backend := getNextBackend()
 	if backend == nil {
+		//ALl backends are dead 
 		http.Error(w, "No healthy backends", http.StatusServiceUnavailable)
 		return
 	}
@@ -112,6 +118,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	proxy.ServeHTTP(w, r)
 }
 
+
+//Function that will start the adminApi Swagger ( interface to add / remove backends )
 func startAdminAPI() {
 	mux := http.NewServeMux()
 
