@@ -14,10 +14,6 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-/*
-	===== DATA STRUCTURES =====
-*/
-
 type Backend struct {
 	URL         *url.URL
 	Alive       bool
@@ -26,7 +22,7 @@ type Backend struct {
 
 var (
 	counter int
-	mu      sync.Mutex // keep your mutex, but now used sanely
+	mu      sync.Mutex
 
 	backends = []*Backend{
 		{URL: mustParse("http://localhost:8081"), Alive: true},
@@ -60,9 +56,6 @@ func resetRateLimiter() {
 	}
 }
 
-/*
-	===== LOAD BALANCER =====
-*/
 
 func getNextBackend() *Backend {
 	mu.Lock()
@@ -85,9 +78,6 @@ func getNextBackend() *Backend {
 	return b
 }
 
-/*
-	===== PROXY HANDLER =====
-*/
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -122,9 +112,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	proxy.ServeHTTP(w, r)
 }
 
-/*
-	===== ADMIN API =====
-*/
 func startAdminAPI() {
 	mux := http.NewServeMux()
 
@@ -132,7 +119,6 @@ func startAdminAPI() {
 	mux.HandleFunc("/admin/backends/add", addBackend)
 	mux.HandleFunc("/admin/backends/remove", removeBackend)
 
-	// Swagger for ADMIN API
 	mux.HandleFunc("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "openapi.yaml")
 	})
@@ -161,7 +147,7 @@ func addBackend(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "POST required", http.StatusMethodNotAllowed)
 		return
 	}
-
+	
 	raw := r.URL.Query().Get("url")
 	if raw == "" {
 		http.Error(w, "missing url", http.StatusBadRequest)
@@ -187,7 +173,6 @@ func removeBackend(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing url", http.StatusBadRequest)
 		return
 	}
-
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -198,7 +183,6 @@ func removeBackend(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
 	http.Error(w, "backend not found", http.StatusNotFound)
 }
 
